@@ -1,6 +1,13 @@
 import os
+import sys
 import random
 import pandas as pd
+
+# Ensure project root is in sys.path for Vercel serverless environment
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
 from flask import Flask, jsonify, request, render_template, send_from_directory
 from flask_cors import CORS
 
@@ -11,12 +18,18 @@ from backend.optimizer import HealthcareScheduleOptimizer
 app = Flask(__name__, template_folder="../templates", static_folder="../static")
 CORS(app)
 
-DATA_PATH = "data/Medical_NoShows.csv"
+DATA_PATH = os.path.join(BASE_DIR, "data", "Medical_NoShows.csv")
 
 # Global Singletons
-ml_engine = HealthcareMLEngine(DATA_PATH)
 if not os.path.exists(DATA_PATH):
-    generate_healthcare_dataset(DATA_PATH)
+    try:
+        os.makedirs(os.path.dirname(DATA_PATH), exist_ok=True)
+        generate_healthcare_dataset(DATA_PATH)
+    except Exception:
+        DATA_PATH = "/tmp/Medical_NoShows.csv"
+        generate_healthcare_dataset(DATA_PATH)
+
+ml_engine = HealthcareMLEngine(DATA_PATH)
 ml_engine.train_model("RandomForest")
 
 # In-memory store for Doctors & Live Appointments

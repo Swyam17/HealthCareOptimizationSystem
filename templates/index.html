@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare Appointment Optimization System | Chandigarh University Project</title>
+    
+    <!-- Google Fonts & Font Awesome Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="dark-theme">
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-logo">
+                    <i class="fa-solid fa-heart-pulse"></i>
+                </div>
+                <div class="brand-text">
+                    <h2>OptiHealth AI</h2>
+                    <p>Appointment Optimizer</p>
+                </div>
+            </div>
+
+            <nav class="nav-menu">
+                <button class="nav-item active" data-tab="tab-dashboard">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Dashboard Analytics</span>
+                </button>
+                <button class="nav-item" data-tab="tab-appointments">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <span>Appointments Console</span>
+                </button>
+                <button class="nav-item" data-tab="tab-doctors">
+                    <i class="fa-solid fa-user-doctor"></i>
+                    <span>Doctor Schedules</span>
+                </button>
+                <button class="nav-item" data-tab="tab-ml-studio">
+                    <i class="fa-solid fa-brain"></i>
+                    <span>ML No-Show Studio</span>
+                </button>
+                <button class="nav-item" data-tab="tab-optimizer">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>Schedule Optimizer</span>
+                </button>
+            </nav>
+
+            <div class="project-info-card">
+                <div class="info-header">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    <span>CU BE Project Work</span>
+                </div>
+                <p><strong>Supervised by:</strong><br>Dr. Bhupaesh Ghai</p>
+                <p class="team-list"><strong>Team:</strong> Swyam, Yash, Ayush, Kanish, Saksham</p>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header Bar -->
+            <header class="top-header">
+                <div class="header-title">
+                    <h1 id="page-title">Executive Analytics Dashboard</h1>
+                    <p id="page-subtitle">Real-time attendance predictions & multi-objective schedule optimization</p>
+                </div>
+
+                <div class="header-actions">
+                    <button class="btn btn-outline" id="btn-refresh">
+                        <i class="fa-solid fa-rotate-right"></i> Refresh
+                    </button>
+                    <button class="btn btn-primary" id="btn-open-book-modal">
+                        <i class="fa-solid fa-plus"></i> Book Appointment
+                    </button>
+                </div>
+            </header>
+
+            <!-- TAB 1: EXECUTIVE DASHBOARD -->
+            <section id="tab-dashboard" class="tab-page active">
+                <!-- Metric Cards Grid -->
+                <div class="metrics-grid">
+                    <div class="metric-card glass-card">
+                        <div class="card-icon cyan"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                        <div class="card-data">
+                            <span class="card-label">Avg Waiting Time</span>
+                            <h3 id="dash-wait-time">-- min</h3>
+                            <span class="card-badge success" id="dash-wait-diff"><i class="fa-solid fa-arrow-down"></i> Optimized</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card glass-card">
+                        <div class="card-icon blue"><i class="fa-solid fa-user-doctor"></i></div>
+                        <div class="card-data">
+                            <span class="card-label">Doctor Utilization</span>
+                            <h3 id="dash-doctor-util">-- %</h3>
+                            <span class="card-badge success" id="dash-util-diff"><i class="fa-solid fa-arrow-up"></i> + Capacity</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card glass-card">
+                        <div class="card-icon purple"><i class="fa-solid fa-shield-halved"></i></div>
+                        <div class="card-data">
+                            <span class="card-label">ML Prediction Accuracy</span>
+                            <h3 id="dash-ml-acc">-- %</h3>
+                            <span class="card-sub" id="dash-ml-roc">ROC-AUC: --</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card glass-card">
+                        <div class="card-icon amber"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                        <div class="card-data">
+                            <span class="card-label">High No-Show Risks</span>
+                            <h3 id="dash-high-risk-count">0</h3>
+                            <span class="card-sub">Flagged for buffer slots</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Visual Charts Grid -->
+                <div class="charts-grid mt-4">
+                    <div class="chart-card glass-card col-span-2">
+                        <div class="card-header-flex">
+                            <h3><i class="fa-solid fa-chart-column"></i> Operational Comparison: Baseline FCFS vs. ML-Optimized</h3>
+                            <span class="pill-tag">Multi-Objective Cost Optimization</span>
+                        </div>
+                        <div class="chart-wrapper">
+                            <canvas id="chart-comparison"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card glass-card">
+                        <div class="card-header-flex">
+                            <h3><i class="fa-solid fa-pie-chart"></i> Patient No-Show Risk Distribution</h3>
+                        </div>
+                        <div class="chart-wrapper">
+                            <canvas id="chart-risk-pie"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Live Appointments Preview Table -->
+                <div class="table-card glass-card mt-4">
+                    <div class="card-header-flex">
+                        <h3><i class="fa-solid fa-list-check"></i> Live Priority Appointments</h3>
+                        <button class="btn btn-sm btn-outline view-all-btn" data-tab="tab-appointments">View All</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="custom-table" id="dashboard-recent-table">
+                            <thead>
+                                <tr>
+                                    <th>Appointment ID</th>
+                                    <th>Patient</th>
+                                    <th>Doctor & Specialty</th>
+                                    <th>Priority</th>
+                                    <th>Lead Time</th>
+                                    <th>ML Risk Score</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- JS population -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: APPOINTMENTS CONSOLE -->
+            <section id="tab-appointments" class="tab-page">
+                <div class="filter-card glass-card mb-4">
+                    <div class="filter-controls">
+                        <div class="search-box">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="apt-search" placeholder="Search patient name, ID, or doctor...">
+                        </div>
+
+                        <select id="filter-dept" class="custom-select">
+                            <option value="">All Departments</option>
+                            <option value="Cardiology">Cardiology</option>
+                            <option value="Orthopedics">Orthopedics</option>
+                            <option value="Neurology">Neurology</option>
+                            <option value="Pediatrics">Pediatrics</option>
+                            <option value="Dermatology">Dermatology</option>
+                        </select>
+
+                        <select id="filter-status" class="custom-select">
+                            <option value="">All Statuses</option>
+                            <option value="Scheduled">Scheduled</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Cancelled">Cancelled</option>
+                            <option value="No-Show">No-Show</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-card glass-card">
+                    <div class="table-responsive">
+                        <table class="custom-table" id="appointments-master-table">
+                            <thead>
+                                <tr>
+                                    <th>Appt ID</th>
+                                    <th>Patient Name & ID</th>
+                                    <th>Doctor & Room</th>
+                                    <th>Department</th>
+                                    <th>Priority</th>
+                                    <th>Lead Days</th>
+                                    <th>ML Risk Score</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="appointments-table-body">
+                                <!-- JS population -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: DOCTOR SCHEDULES -->
+            <section id="tab-doctors" class="tab-page">
+                <div class="doctors-grid" id="doctors-container">
+                    <!-- JS Doctor Cards -->
+                </div>
+            </section>
+
+            <!-- TAB 4: ML NO-SHOW STUDIO -->
+            <section id="tab-ml-studio" class="tab-page">
+                <div class="grid-2col mb-4">
+                    <div class="glass-card p-4">
+                        <div class="card-header-flex">
+                            <h3><i class="fa-solid fa-robot"></i> Classifier Model Performance</h3>
+                            <select id="ml-algo-select" class="custom-select">
+                                <option value="DecisionTree">Decision Tree Classifier</option>
+                                <option value="LogisticRegression">Logistic Regression</option>
+                                <option value="NaiveBayes">Gaussian Naive Bayes</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary mt-2 btn-full" id="btn-retrain-ml">
+                            <i class="fa-solid fa-gears"></i> Re-Train Classifier Model
+                        </button>
+
+                        <div class="metrics-mini-grid mt-4">
+                            <div class="mini-metric"><span class="lbl">Accuracy</span><h4 id="ml-stat-acc">--</h4></div>
+                            <div class="mini-metric"><span class="lbl">Precision</span><h4 id="ml-stat-prec">--</h4></div>
+                            <div class="mini-metric"><span class="lbl">Recall</span><h4 id="ml-stat-rec">--</h4></div>
+                            <div class="mini-metric"><span class="lbl">F1 Score</span><h4 id="ml-stat-f1">--</h4></div>
+                            <div class="mini-metric highlight"><span class="lbl">ROC-AUC</span><h4 id="ml-stat-roc">--</h4></div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card p-4">
+                        <h3><i class="fa-solid fa-list-ol"></i> Feature Importance Drivers</h3>
+                        <p class="text-sm muted">Key factors influencing appointment no-show probability</p>
+                        <div class="chart-wrapper mt-2">
+                            <canvas id="chart-feature-importance"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interactive ML Prediction Calculator -->
+                <div class="glass-card p-4">
+                    <h3><i class="fa-solid fa-calculator"></i> Single Appointment No-Show Risk Predictor</h3>
+                    <p class="muted mb-4">Test custom patient parameters to calculate instant ML attendance risk</p>
+                    <form id="form-predictor" class="form-grid">
+                        <div class="form-group">
+                            <label>Age</label>
+                            <input type="number" id="pred-age" value="38" min="1" max="100">
+                        </div>
+                        <div class="form-group">
+                            <label>Lead Time (Days)</label>
+                            <input type="number" id="pred-lead" value="14" min="0" max="60">
+                        </div>
+                        <div class="form-group">
+                            <label>Prior No-Shows</label>
+                            <input type="number" id="pred-noshows" value="2" min="0" max="10">
+                        </div>
+                        <div class="form-group">
+                            <label>Prior Cancellations</label>
+                            <input type="number" id="pred-cancels" value="1" min="0" max="10">
+                        </div>
+                        <div class="form-group">
+                            <label>SMS Reminder Sent?</label>
+                            <select id="pred-sms" class="custom-select">
+                                <option value="1">Yes (Confirmed)</option>
+                                <option value="0">No (Not Sent)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Department</label>
+                            <select id="pred-dept" class="custom-select">
+                                <option value="Cardiology">Cardiology</option>
+                                <option value="Orthopedics">Orthopedics</option>
+                                <option value="Neurology">Neurology</option>
+                                <option value="Pediatrics">Pediatrics</option>
+                                <option value="Dermatology">Dermatology</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Priority</label>
+                            <select id="pred-priority" class="custom-select">
+                                <option value="Routine">Routine</option>
+                                <option value="Moderate">Moderate</option>
+                                <option value="Urgent">Urgent</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Appointment Day</label>
+                            <select id="pred-day" class="custom-select">
+                                <option value="Monday">Monday</option>
+                                <option value="Wednesday">Wednesday</option>
+                                <option value="Friday">Friday</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-span-full">
+                            <button type="button" class="btn btn-accent btn-full" id="btn-calc-risk">
+                                <i class="fa-solid fa-bolt"></i> Evaluate ML Risk Score
+                            </button>
+                        </div>
+                    </form>
+
+                    <div id="predictor-result-box" class="risk-result-box hidden mt-4">
+                        <div class="result-header">
+                            <div class="score-circle" id="result-score-circle">0%</div>
+                            <div class="result-details">
+                                <h4 id="result-risk-level">Risk Level</h4>
+                                <p id="result-drivers" class="muted">Key Drivers: --</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 5: SCHEDULE OPTIMIZER SIMULATOR -->
+            <section id="tab-optimizer" class="tab-page">
+                <div class="grid-2col mb-4">
+                    <div class="glass-card p-4">
+                        <h3><i class="fa-solid fa-sliders"></i> Multi-Objective Cost Weights</h3>
+                        <p class="muted text-sm mb-4">Minimizing \(Cost = w_1 \cdot WaitTime + w_2 \cdot IdleTime + w_3 \cdot UnusedSlots + w_4 \cdot Overtime + w_5 \cdot NoShowPenalty\)</p>
+
+                        <div class="slider-group">
+                            <label>Waiting Time Weight (\(w_1\)): <span id="val-w-wait">1.0</span></label>
+                            <input type="range" id="slider-w-wait" min="0.5" max="3.0" step="0.1" value="1.0">
+                        </div>
+                        <div class="slider-group">
+                            <label>Doctor Idle Time Weight (\(w_2\)): <span id="val-w-idle">1.5</span></label>
+                            <input type="range" id="slider-w-idle" min="0.5" max="3.0" step="0.1" value="1.5">
+                        </div>
+                        <div class="slider-group">
+                            <label>Unused Slot Penalty (\(w_3\)): <span id="val-w-unused">2.0</span></label>
+                            <input type="range" id="slider-w-unused" min="0.5" max="4.0" step="0.1" value="2.0">
+                        </div>
+                        <div class="slider-group">
+                            <label>Doctor Overtime Penalty (\(w_4\)): <span id="val-w-overtime">2.5</span></label>
+                            <input type="range" id="slider-w-overtime" min="0.5" max="5.0" step="0.1" value="2.5">
+                        </div>
+
+                        <button class="btn btn-primary btn-full mt-4" id="btn-run-simulation">
+                            <i class="fa-solid fa-play"></i> Execute Schedule Optimizer
+                        </button>
+                    </div>
+
+                    <div class="glass-card p-4">
+                        <h3><i class="fa-solid fa-bolt-lightning"></i> Dynamic Rescheduling Module</h3>
+                        <p class="muted text-sm mb-4">Simulate an unexpected patient cancellation or no-show and reallocate capacity in real time.</p>
+
+                        <div class="form-group mb-4">
+                            <label>Select Appointment to Cancel</label>
+                            <select id="select-reschedule-apt" class="custom-select">
+                                <!-- JS options -->
+                            </select>
+                        </div>
+
+                        <button class="btn btn-warning btn-full" id="btn-trigger-reschedule">
+                            <i class="fa-solid fa-arrows-rotate"></i> Dynamic Reallocate Slot
+                        </button>
+
+                        <div id="reschedule-log-box" class="reschedule-log mt-4 hidden">
+                            <!-- Dynamic reallocation summary -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Simulation Results Table -->
+                <div class="glass-card p-4">
+                    <div class="card-header-flex">
+                        <h3><i class="fa-solid fa-table-cells"></i> Schedule Timeline: Baseline FCFS vs ML-Optimized</h3>
+                    </div>
+
+                    <div class="table-responsive mt-3">
+                        <table class="custom-table" id="simulation-timeline-table">
+                            <thead>
+                                <tr>
+                                    <th>Scheduled Start</th>
+                                    <th>Patient ID & Name</th>
+                                    <th>Priority</th>
+                                    <th>No-Show Probability</th>
+                                    <th>Slot Allocation Strategy</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- JS timeline entries -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- BOOK APPOINTMENT MODAL -->
+    <div class="modal-overlay hidden" id="modal-book-apt">
+        <div class="modal-card glass-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-calendar-plus"></i> Book New Healthcare Appointment</h3>
+                <button class="btn-close" id="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-book-appointment" class="form-grid">
+                    <div class="form-group">
+                        <label>Patient Name</label>
+                        <input type="text" id="book-name" required placeholder="e.g. John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label>Age</label>
+                        <input type="number" id="book-age" value="45" min="1" max="100">
+                    </div>
+                    <div class="form-group">
+                        <label>Gender</label>
+                        <select id="book-gender" class="custom-select">
+                            <option value="M">Male</option>
+                            <option value="F">Female</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Assigned Doctor</label>
+                        <select id="book-doctor" class="custom-select">
+                            <!-- JS options -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <select id="book-priority" class="custom-select">
+                            <option value="Routine">Routine</option>
+                            <option value="Moderate">Moderate</option>
+                            <option value="Urgent">Urgent</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Lead Time (Days)</label>
+                        <input type="number" id="book-lead" value="7" min="0" max="60">
+                    </div>
+                    <div class="form-group">
+                        <label>SMS Confirmation Sent?</label>
+                        <select id="book-sms" class="custom-select">
+                            <option value="1">Yes</option>
+                            <option value="0">No</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Prior No-Shows</label>
+                        <input type="number" id="book-prior-noshows" value="0" min="0">
+                    </div>
+                    <div class="form-group col-span-full">
+                        <button type="submit" class="btn btn-primary btn-full">
+                            <i class="fa-solid fa-check"></i> Book & Evaluate ML Risk
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Main Application JavaScript -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

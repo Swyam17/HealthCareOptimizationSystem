@@ -6,9 +6,9 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 from backend.data_generator import generate_healthcare_dataset
 from backend.ml_engine import HealthcareMLEngine
-from backend.app import app
 
 def main():
+    from backend.app import app
     print("=" * 70)
     print("  HEALTHCARE APPOINTMENT OPTIMIZATION SYSTEM")
     print("  Project Synopsis Implementation | Chandigarh University")

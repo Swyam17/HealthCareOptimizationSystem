@@ -15,7 +15,9 @@ from backend.data_generator import generate_healthcare_dataset
 from backend.ml_engine import HealthcareMLEngine
 from backend.optimizer import HealthcareScheduleOptimizer
 
-app = Flask(__name__, template_folder="../templates", static_folder="../static")
+template_dir = os.path.join(BASE_DIR, "templates")
+static_dir = os.path.join(BASE_DIR, "static")
+app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 CORS(app)
 
 DATA_PATH = os.path.join(BASE_DIR, "data", "Medical_NoShows.csv")
@@ -27,7 +29,10 @@ if not os.path.exists(DATA_PATH):
         generate_healthcare_dataset(DATA_PATH)
     except Exception:
         DATA_PATH = "/tmp/Medical_NoShows.csv"
-        generate_healthcare_dataset(DATA_PATH)
+        try:
+            generate_healthcare_dataset(DATA_PATH)
+        except Exception:
+            pass
 
 ml_engine = HealthcareMLEngine(DATA_PATH)
 ml_engine.train_model("RandomForest")
@@ -45,36 +50,42 @@ LIVE_APPOINTMENTS = []
 
 def init_live_appointments():
     global LIVE_APPOINTMENTS
-    if os.path.exists(DATA_PATH):
-        df = pd.read_csv(DATA_PATH).head(25)
-        LIVE_APPOINTMENTS = []
-        for idx, row in df.iterrows():
-            doc = random.choice(DOCTORS)
-            apt_dict = {
-                "AppointmentID": str(row["AppointmentID"]),
-                "PatientID": str(row["PatientID"]),
-                "PatientName": f"Patient #{row['PatientID'][-4:]}",
-                "Age": int(row["Age"]),
-                "Gender": str(row["Gender"]),
-                "Department": str(row["Department"]),
-                "DoctorID": doc["id"],
-                "DoctorName": doc["name"],
-                "Priority": str(row["Priority"]),
-                "ScheduledDate": str(row["ScheduledDate"]),
-                "AppointmentDate": str(row["AppointmentDate"]),
-                "LeadTimeDays": int(row["LeadTimeDays"]),
-                "DayOfWeek": str(row["DayOfWeek"]),
-                "AppointmentHour": int(row["AppointmentHour"]),
-                "SMSReceived": int(row["SMSReceived"]),
-                "PreviousNoShows": int(row["PreviousNoShows"]),
-                "PreviousCancellations": int(row["PreviousCancellations"]),
-                "ExpectedDurationMin": int(row["ExpectedDurationMin"]),
-                "NoShow": int(row["NoShow"]),
-                "Status": "Scheduled"
-            }
-            risk = ml_engine.predict_appointment_risk(apt_dict)
-            apt_dict.update(risk)
-            LIVE_APPOINTMENTS.append(apt_dict)
+    try:
+        if os.path.exists(DATA_PATH):
+            df = pd.read_csv(DATA_PATH).head(25)
+        else:
+            df = generate_healthcare_dataset(DATA_PATH, num_records=25)
+    except Exception:
+        df = generate_healthcare_dataset(num_records=25)
+
+    LIVE_APPOINTMENTS = []
+    for idx, row in df.head(25).iterrows():
+        doc = random.choice(DOCTORS)
+        apt_dict = {
+            "AppointmentID": str(row["AppointmentID"]),
+            "PatientID": str(row["PatientID"]),
+            "PatientName": f"Patient #{str(row['PatientID'])[-4:]}",
+            "Age": int(row["Age"]),
+            "Gender": str(row["Gender"]),
+            "Department": str(row["Department"]),
+            "DoctorID": doc["id"],
+            "DoctorName": doc["name"],
+            "Priority": str(row["Priority"]),
+            "ScheduledDate": str(row["ScheduledDate"]),
+            "AppointmentDate": str(row["AppointmentDate"]),
+            "LeadTimeDays": int(row["LeadTimeDays"]),
+            "DayOfWeek": str(row["DayOfWeek"]),
+            "AppointmentHour": int(row["AppointmentHour"]),
+            "SMSReceived": int(row["SMSReceived"]),
+            "PreviousNoShows": int(row["PreviousNoShows"]),
+            "PreviousCancellations": int(row["PreviousCancellations"]),
+            "ExpectedDurationMin": int(row["ExpectedDurationMin"]),
+            "NoShow": int(row["NoShow"]),
+            "Status": "Scheduled"
+        }
+        risk = ml_engine.predict_appointment_risk(apt_dict)
+        apt_dict.update(risk)
+        LIVE_APPOINTMENTS.append(apt_dict)
 
 init_live_appointments()
 

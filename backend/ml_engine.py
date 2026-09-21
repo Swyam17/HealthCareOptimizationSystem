@@ -23,8 +23,10 @@ class HealthcareMLEngine:
         self.model = None
         self.model_name = "DecisionTree"
         self.metrics = {}
-        self.feature_importances = []
-        os.makedirs(MODEL_DIR, exist_ok=True)
+        try:
+            os.makedirs(MODEL_DIR, exist_ok=True)
+        except Exception:
+            pass
 
     def _preprocess_dataframe(self, df):
         """Transforms raw dataframe into numerical feature matrix."""
@@ -106,7 +108,10 @@ class HealthcareMLEngine:
             "no_show_rate": round(float(y.mean()), 4)
         }
 
-        joblib.dump({"model": clf, "algorithm": algorithm, "metrics": self.metrics, "feature_importances": feature_imp}, MODEL_PATH)
+        try:
+            joblib.dump({"model": clf, "algorithm": algorithm, "metrics": self.metrics, "feature_importances": feature_imp}, MODEL_PATH)
+        except Exception as e:
+            print(f"[ML Engine] Model training completed in memory (file save skipped: {e})")
         print(f"[ML Engine] Trained {algorithm} - Accuracy: {acc:.4f}, ROC-AUC: {roc:.4f}")
         return self.metrics
 

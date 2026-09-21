@@ -79,8 +79,12 @@ def generate_healthcare_dataset(filepath="data/Medical_NoShows.csv", num_records
         })
 
     df = pd.DataFrame(data)
-    df.to_csv(filepath, index=False)
-    print(f"[Dataset Generator] Successfully generated {num_records} records to '{filepath}'. No-Show rate: {df['NoShow'].mean()*100:.1f}%")
+    try:
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        df.to_csv(filepath, index=False)
+        print(f"[Dataset Generator] Successfully generated {num_records} records to '{filepath}'. No-Show rate: {df['NoShow'].mean()*100:.1f}%")
+    except Exception as e:
+        print(f"[Dataset Generator] Warning: Could not write dataset to file ({e}). Returning generated DataFrame in memory.")
     return df
 
 if __name__ == "__main__":

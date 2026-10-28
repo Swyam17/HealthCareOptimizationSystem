@@ -22,16 +22,25 @@ class VercelPathFixMiddleware:
         self.wsgi_app = wsgi_app
 
     def __call__(self, environ, start_response):
-        path = environ.get("PATH_INFO", "")
-        # If Vercel rewrote request path to the serverless function destination
-        if path in ("/api/index", "/api/index.py", "/api/index/"):
-            matched = environ.get("HTTP_X_MATCHED_PATH") or environ.get("HTTP_X_NOW_ROUTE_MATCHES")
-            if matched and matched not in ("/api/index", "/api/index.py"):
+        import urllib.parse
+        query = environ.get("QUERY_STRING", "")
+        # 1. Parse __path injected by Vercel rewrite rules
+        if "__path=" in query:
+            params = urllib.parse.parse_qs(query, keep_blank_values=True)
+            if "__path" in params and params["__path"]:
+                environ["PATH_INFO"] = params["__path"][0]
+                del params["__path"]
+                environ["QUERY_STRING"] = urllib.parse.urlencode(params, doseq=True)
+
+        # 2. Check headers
+        elif environ.get("HTTP_X_MATCHED_PATH"):
+            matched = environ.get("HTTP_X_MATCHED_PATH")
+            if matched and not matched.startswith("/api/index"):
                 environ["PATH_INFO"] = matched
-            else:
-                environ["PATH_INFO"] = "/"
-        elif path.startswith("/api/index/"):
-            environ["PATH_INFO"] = path[len("/api/index"):]
+
+        # 3. Fallback if called directly as /api/index
+        elif environ.get("PATH_INFO") in ("/api/index", "/api/index.py"):
+            environ["PATH_INFO"] = "/"
 
         return self.wsgi_app(environ, start_response)
 

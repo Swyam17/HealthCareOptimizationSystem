@@ -9,16 +9,36 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, jsonify, request, render_template, send_from_directory
 from flask_cors import CORS
 
 from backend.data_generator import generate_healthcare_dataset
 from backend.ml_engine import HealthcareMLEngine
 from backend.optimizer import HealthcareScheduleOptimizer
 
+# WSGI Middleware to restore PATH_INFO when Vercel rewrites requests
+class VercelPathFixMiddleware:
+    def __init__(self, wsgi_app):
+        self.wsgi_app = wsgi_app
+
+    def __call__(self, environ, start_response):
+        path = environ.get("PATH_INFO", "")
+        # If Vercel rewrote request path to the serverless function destination
+        if path in ("/api/index", "/api/index.py", "/api/index/"):
+            matched = environ.get("HTTP_X_MATCHED_PATH") or environ.get("HTTP_X_NOW_ROUTE_MATCHES")
+            if matched and matched not in ("/api/index", "/api/index.py"):
+                environ["PATH_INFO"] = matched
+            else:
+                environ["PATH_INFO"] = "/"
+        elif path.startswith("/api/index/"):
+            environ["PATH_INFO"] = path[len("/api/index"):]
+
+        return self.wsgi_app(environ, start_response)
+
 template_dir = os.path.join(BASE_DIR, "templates")
 static_dir = os.path.join(BASE_DIR, "static")
 app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
+app.wsgi_app = VercelPathFixMiddleware(app.wsgi_app)
 CORS(app)
 
 DATA_PATH = os.path.join(BASE_DIR, "data", "Medical_NoShows.csv")
@@ -193,10 +213,49 @@ def init_live_appointments():
 
 init_live_appointments()
 
-# --- WEB UI ROUTE ---
+# --- WEB UI & STATIC ROUTES ---
+
 @app.route("/")
+@app.route("/api/index")
+@app.route("/api/index.py")
+@app.route("/index")
+@app.route("/index.html")
 def index():
-    return render_template("index.html")
+    try:
+        return render_template("index.html")
+    except Exception:
+        for candidate in [
+            os.path.join(BASE_DIR, "templates", "index.html"),
+            os.path.join(BASE_DIR, "api", "templates", "index.html"),
+            "templates/index.html",
+            "api/templates/index.html"
+        ]:
+            if os.path.exists(candidate):
+                with open(candidate, "r", encoding="utf-8") as f:
+                    return f.read(), 200, {"Content-Type": "text/html; charset=utf-8"}
+        return "Healthcare Appointment Optimization System API Online", 200
+
+@app.route("/static/<path:filename>")
+def serve_static(filename):
+    for candidate in [
+        static_dir,
+        os.path.join(BASE_DIR, "api", "static"),
+        os.path.join(BASE_DIR, "static"),
+        "static",
+        "api/static"
+    ]:
+        full_path = os.path.join(candidate, filename)
+        if os.path.exists(full_path):
+            return send_from_directory(candidate, filename)
+    return "File Not Found", 404
+
+@app.errorhandler(404)
+def handle_404(e):
+    # Gracefully intercept root or index rewrites from serverless edge proxies
+    raw_path = request.path or ""
+    if raw_path in ("", "/", "/api/index", "/api/index.py", "/index", "/index.html"):
+        return index()
+    return jsonify({"error": "Endpoint not found", "path": raw_path}), 404
 
 # --- API ENDPOINTS ---
 

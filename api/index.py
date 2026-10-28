@@ -8,8 +8,5 @@ if root_dir not in sys.path:
 
 from backend.app import app
 
-# Vercel Serverless WSGI entry point
+# Vercel Serverless entry point
 # '@vercel/python' detects 'app' and delegates all incoming requests to Flask
-if __name__ == "__main__":
-    app.run(debug=True)
-

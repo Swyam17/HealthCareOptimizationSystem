@@ -1,8 +1,14 @@
 import copy
+import os
+import sys
 import random
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
+
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
 
 class HealthcareScheduleOptimizer:
     def __init__(self, weight_wait=1.0, weight_idle=1.5, weight_unused=2.0, weight_overtime=2.5, weight_noshow=1.2):

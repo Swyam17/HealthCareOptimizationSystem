@@ -46,13 +46,35 @@ Navigate to `http://localhost:5000` in your web browser.
 
 ---
 
+## ☁️ Deploying to Vercel
+
+The project is pre-configured for one-click deployment on **Vercel** with `@vercel/python` serverless architecture:
+
+### Option A: Via GitHub (Recommended)
+1. Push this repository to your GitHub account (`git add .`, `git commit -m "Configure Vercel deployment and ML accuracy"`, `git push`).
+2. Log into [Vercel](https://vercel.com) and click **"Add New Project"**.
+3. Import your GitHub repository.
+4. Leave Root Directory and Build Settings as default (Vercel automatically detects `vercel.json` and `api/index.py`).
+5. Click **Deploy**. Your app will be live with a production HTTPS URL!
+
+### Option B: Via Vercel CLI
+```bash
+npm install -g vercel
+vercel
+```
+Follow the CLI prompts (accept defaults). Vercel builds and deploys serverless functions instantly.
+
+---
+
 ## 🛠 Project Structure
 
 ```
 HealthcareOptimizationSystem/
+├── api/
+│   └── index.py            # Vercel Serverless WSGI Entry Point
 ├── backend/
 │   ├── app.py              # Flask API Web Application
-│   ├── data_generator.py   # Synthetic Dataset Engine
+│   ├── data_generator.py   # Dataset Engine & Clinical Mapper
 │   ├── ml_engine.py        # ML No-Show Risk Classifier & Trainer
 │   └── optimizer.py        # Schedule Optimizer & Dynamic Rescheduler
 ├── templates/
@@ -61,9 +83,11 @@ HealthcareOptimizationSystem/
 │   ├── css/style.css       # Glassmorphism Design System
 │   └── js/app.js           # Frontend Controller & Chart.js Integration
 ├── data/
-│   └── Medical_NoShows.csv # Healthcare Appointments Dataset
+│   └── Medical_NoShows.csv # Real 1,500-Record Healthcare Dataset
 ├── models/
-│   └── no_show_model.pkl   # Serialized ML Model
-├── run.py                  # Main Entry Point
-└── requirements.txt        # Python Dependencies
+│   └── no_show_model.pkl   # Pre-trained ML Model (Instant Cold Start)
+├── vercel.json             # Vercel Serverless Routing Config
+├── .vercelignore           # Vercel Deployment Exclusion List
+├── run.py                  # Local Development Runner
+└── requirements.txt        # Lean Production Dependencies
 ```
